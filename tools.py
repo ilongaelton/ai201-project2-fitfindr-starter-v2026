@@ -158,9 +158,12 @@ def search_listings(
             continue
         score = _score(keywords, listing)
         if score > 0:
-            scored.append((score, listing))
+            # Tie-break on keywords in the title, so "vintage graphic tee"
+            # puts the listing titled "Graphic Tee" ahead of a tagged one.
+            title_hits = len(set(keywords) & set(_words(listing["title"])))
+            scored.append(((score, title_hits), listing))
 
-    # sorted() is stable, so ties keep the file's order.
+    # sort() is stable, so remaining ties keep the file's order.
     scored.sort(key=lambda pair: pair[0], reverse=True)
     return [listing for _, listing in scored[: config.SEARCH_RESULT_LIMIT]]
 
