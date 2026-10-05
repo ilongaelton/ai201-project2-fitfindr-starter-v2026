@@ -59,24 +59,26 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Finds listings in `data/listings.json` whose words overlap the user's description, after dropping anything over the price ceiling or in the wrong size, and ranks them best match first.
+- **Inputs:** `description` (str) — keywords like `"vintage graphic tee"`; `size` (str or None) — e.g. `"M"` or `"8"`, None skips the size filter; `max_price` (float or None) — inclusive ceiling in dollars, None skips the price filter.
+- **Returns:** A `list[dict]` of at most `config.SEARCH_RESULT_LIMIT` (10) listing dicts, highest keyword score first. Each dict is the listing exactly as stored: `id`, `title`, `description`, `category`, `style_tags` (list), `size`, `condition`, `price` (float), `colors` (list), `brand` (str or None), `platform`.
+  - *Scoring:* each description keyword (lower-cased, stop words like "for"/"under"/"size" removed) scores 2 if it appears in the title or a style tag, 1 if it appears only in the description, category, colors or brand. Listings scoring 0 are dropped.
+  - *Size match:* the listing's size is split into tokens on spaces, `/` and brackets, and the requested size (upper-cased, with any `US` / `SIZE` prefix removed) must equal one of those tokens. So `M` matches `S/M` and `M/L` but `L` does **not** match `XL`, and `8` matches `US 8` but not `US 8.5`. A listing whose size starts with `One Size` matches any requested size.
+- **When it has nothing:** An empty list `[]` — never None, never an exception. That includes an empty or all-stop-word description.
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Asks the model for one or two outfits built around the thrifted item, using pieces the user already owns when there are any.
+- **Inputs:** `new_item` (dict) — one listing dict, as returned by `search_listings`; `wardrobe` (dict) — `{"items": [ ... ]}` where each item has `id`, `name`, `category`, `colors` (list), `style_tags` (list), `notes`. `items` may be an empty list.
+- **Returns:** A non-empty `str` of outfit suggestions. With wardrobe items, each outfit names pieces from the wardrobe by their `name`. With an empty wardrobe, it is general styling advice for the item (what kinds of pieces to pair it with) instead.
+- **When it has nothing:** An empty wardrobe is not "nothing" — it returns general advice, as above. If `new_item` is empty/None, or the model returns blank text, it returns a descriptive message string starting `"No outfit suggestion:"` rather than `""` or raising.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Asks the model for a short, post-ready caption about the find and how it's styled.
+- **Inputs:** `outfit` (str) — the text `suggest_outfit` returned; `new_item` (dict) — the same listing dict that went into `suggest_outfit`.
+- **Returns:** A `str` caption of two to four sentences that names the item, its price (e.g. `$24`) and its platform once each, and describes the vibe of the outfit. Brand is mentioned only if the listing has one. Wording varies run to run (`TEMPERATURE = 0.9`).
+- **When it has nothing:** If `outfit` is empty or only whitespace (or the model returns blank text), it returns the message string `"No fit card: there was no outfit suggestion to caption."` — never `""`, never an exception.
 
 ---
 
@@ -93,7 +95,7 @@
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** If `search_listings` returns an empty list, put a message in `session["error"]` that says which part of the query to change (the words, the size, or the price — and the cheapest matching price when the price was the problem) and stop, leaving `selected_item`, `outfit_suggestion` and `fit_card` as None. Otherwise take the first result as `session["selected_item"]` and go to `suggest_outfit`, then `create_fit_card`.
 
 **Where it lives:** `agent.py::run_agent`
 
