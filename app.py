@@ -27,12 +27,12 @@ import config
 # query that finds nothing because the item doesn't exist looks exactly like a
 # search tool that's broken.
 EXAMPLE_QUERIES = [
-    "vintage graphic tee under $30",
-    "90s track jacket in size M",
-    "silk slip dress in midi length under $40",
-    "platform sneakers size 8",
-    "denim jacket under $50",
-    "designer ballgown size XXS under $5",   # matches nothing, on purpose
+    'vintage graphic tee under $30',
+    '90s track jacket in size M',
+    'silk slip dress in midi length under $40',
+    'platform sneakers size 8',
+    'denim jacket under $50',
+    'designer ballgown size XXS under $5',   # matches nothing, on purpose
 ]
 
 
