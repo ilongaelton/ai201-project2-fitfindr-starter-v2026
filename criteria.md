@@ -28,6 +28,10 @@ tool calls and returns a fit card — in at least 4 of 5 tries.
 <!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
      "my search is a plain keyword match and some phrasings will miss" is a
      real answer. -->
+Not 5 of 5 because two of the three tools call Gemini over the network on
+the free tier (15 requests a minute), and one slow or failed call ends the
+run without a fit card even when my code is right. The search side is
+deterministic for these queries, so I don't expect it to be the miss.
 
 ---
 
@@ -39,6 +43,10 @@ Given a query that matches no listings, the agent stops before calling
 **Why this target:**
 <!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
      about this path? -->
+This path never calls the model: `run_agent` checks whether the search list
+is empty and stops, and the message is built by plain Python that re-runs the
+search with one filter removed. Nothing random happens on it, so a single
+failure would mean the branch itself is broken.
 
 ---
 
@@ -54,10 +62,18 @@ Given a query that matches no listings, the agent stops before calling
      compares session["selected_item"] against what actually reached
      suggest_outfit is the shape you're after. -->
 
-
+Given the query `vintage graphic tee under $30`, the `id` of
+`session["selected_item"]` equals `session["search_results"][0]["id"]`, equals
+the `id` of the listing `suggest_outfit` actually received, and the fit card
+contains that listing's price (`$24`) — in 5 of 5 tries.
 
 **Why this target:**
 
+The item moves from search to the next two tools only through the session, in
+plain Python, with no model in between, so it has no reason to change. Checking
+the price in the fit card catches the one place the model could swap in a
+different item. If this ever misses, the session wiring is wrong, so I won't
+accept less than 5 of 5.
 
 
 ---
@@ -75,10 +91,19 @@ Given a query that matches no listings, the agent stops before calling
      sentence? A card longer than a caption anyone would post? Any of those can
      be turned into a number. -->
 
-
+Across the five matching example queries in `python app.py examples` (one run
+each), at least 4 of the 5 fit cards contain the item's price written as `$N`,
+contain the platform name (ignoring capitals), and have 2 to 4 sentences —
+counting a sentence as text ending in `.`, `!` or `?`, and ignoring hashtags
+and emoji.
 
 **Why this target:**
 
+The prompt asks for all three, but the model writes at `TEMPERATURE = 0.9`, so
+the wording changes every run and it sometimes adds an extra sentence or drops
+a detail. One card in five drifting is what I'd expect from a free model. Two
+would mean my prompt isn't strong enough. In early testing it did break once in
+a different way: for the platform sneakers it told the user not to buy them.
 
 
 ---
@@ -92,10 +117,17 @@ Given a query that matches no listings, the agent stops before calling
      search respects a price ceiling — anything, as long as it names a number
      or an observable outcome. -->
 
-
+Given `denim jacket under $50` with the empty wardrobe, the agent completes all
+three tools, `session["outfit_suggestion"]` is not empty and does not start
+with `No outfit suggestion:`, and it contains none of the ten item names from
+the example wardrobe word for word — in at least 4 of 5 tries.
 
 **Why this target:**
 
+`suggest_outfit` switches to a general-advice prompt when `items` is empty, and
+that switch is plain code. But the model could still invent "your" pieces that
+sound like wardrobe items, and the run depends on two model calls, as in
+criterion 1. So 4 of 5, not 5 of 5.
 
 
 ---

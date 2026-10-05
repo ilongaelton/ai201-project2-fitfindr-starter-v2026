@@ -186,17 +186,23 @@ No fit card: there was no outfit suggestion to caption.
      "I gave Claude my search_listings spec. It returned None on no match
      instead of an empty list, so I changed it" is the level we want. -->
 
+I used Claude Code (Claude Opus 5.5) in VS Code for most of this unit. It ran
+the starter, wrote the Tool Inventory spec, built the three tools and
+`run_agent`, and ran the tests. At my request it also wrote criteria 3–5 and
+the reasons in `criteria.md`, which the brief says to write yourself. I'm
+noting that here so it's on the record.
+
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Build `search_listings` to the spec in Tool Inventory, then test it on the example queries.
+- *What came back:* It worked, but `vintage graphic tee under $30` returned the "Y2K Baby Tee — Butterfly Print" first instead of "Graphic Tee — 2003 Tour Bootleg Style". Both scored 6, and the tie fell back to the order in `listings.json`.
+- *What I changed:* We added a tie-break on how many query words appear in the title, so the Graphic Tee (`lst_006`) now comes first. We added that rule to the Tool Inventory scoring line too, so the spec matches the code.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Run every example query end to end through `python app.py ask`.
+- *What came back:* For `platform sneakers size 8`, `suggest_outfit` opened with "Skip these. You already own chunky white sneakers…", and the fit card then said "Honestly, I skipped these platform sneakers". The model was giving buying advice that the prompt never asked for, and the fit card repeated it.
+- *What I changed:* Nothing yet, on purpose. The tool code is doing what it should, and the problem is in the prompt. I'm keeping it as a known failure to diagnose and fix in unit 4 (it's mentioned under criterion 4).
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
